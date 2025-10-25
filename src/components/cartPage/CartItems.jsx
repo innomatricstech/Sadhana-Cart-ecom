@@ -48,13 +48,12 @@ const CartItems = ({ items, onIncrease, onDecrease, onRemove }) => {
               <Col xs={12} md={3} className="mt-3 mt-md-0 text-center">
                 <ButtonGroup className="quantity-group">
                   <Button
-                    variant="outline-dark"
-                    onClick={() => onDecrease(item)}
-                    disabled={item.quantity <= 1}
-                    className="qty-btn"
-                  >
-                    −
-                  </Button>
+  variant="outline-dark"
+  onClick={() => onDecrease(item)}
+  disabled={item.quantity <= 1} // Prevent going below 1
+>
+  −
+</Button>
                   <Button variant="dark" disabled className="qty-display">
                     {item.quantity}
                   </Button>

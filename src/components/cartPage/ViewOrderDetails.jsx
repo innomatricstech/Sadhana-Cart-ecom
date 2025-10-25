@@ -56,7 +56,7 @@ const mapFirestoreOrderToLocal = (docData, docId) => {
   };
 };
 
-// --- OrderCard Component (unchanged from the desired structure) ---
+// --- OrderCard Component (responsive enhancement applied in Card.Footer) ---
 
 const OrderCard = ({ order, navigate }) => (
   <Card className="mb-4 shadow-sm border-0 rounded-3">
@@ -77,6 +77,7 @@ const OrderCard = ({ order, navigate }) => (
 
     <Card.Body className="bg-white">
       <Row>
+        {/* These columns stack on mobile (default) and go side-by-side on medium (md) screens and up */}
         <Col md={6}>
           <p className="mb-1">
             <strong>Order Date:</strong> {order.date}
@@ -92,7 +93,7 @@ const OrderCard = ({ order, navigate }) => (
           </p>
         </Col>
 
-        <Col md={6}>
+        <Col md={6} className="mt-3 mt-md-0"> {/* Add margin top on mobile only */}
           <h6 className="fw-bold mb-2">Shipping To:</h6>
           <p className="mb-1">{order.shippingAddress?.name}</p>
           <p className="mb-1 small text-muted">
@@ -112,7 +113,7 @@ const OrderCard = ({ order, navigate }) => (
           <h6 className="fw-bold mb-2">Items:</h6>
           {order.items.map((item, idx) => (
             <div key={idx} className="d-flex justify-content-between small mb-1">
-              <span>{item.name} × {item.quantity}</span>
+              <span className="me-2">{item.name} × {item.quantity}</span>
               <span>₹{(item.price * item.quantity).toLocaleString('en-IN')}</span>
             </div>
           ))}
@@ -120,13 +121,17 @@ const OrderCard = ({ order, navigate }) => (
       )}
     </Card.Body>
 
-    <Card.Footer className="text-center bg-light border-0">
-      <Button variant="info" size="sm" className="me-2">
-        Track Package
-      </Button>
-      <Button variant="outline-dark" size="sm" onClick={() => navigate("/")}>
-        Buy Again
-      </Button>
+    {/* 🚀 RESPONSIVENESS ENHANCEMENT: Buttons stack full-width on mobile, then are centered inline on desktop */}
+    <Card.Footer className="bg-light border-0">
+      {/* d-grid makes buttons full-width and stacks them on xs/sm. d-md-block and text-md-center revert to inline and centered on md+. */}
+      <div className="d-grid gap-2 d-md-block text-md-center"> 
+        <Button variant="info" size="sm" className="me-md-2">
+          Track Package
+        </Button>
+        <Button variant="outline-dark" size="sm" onClick={() => navigate("/")}>
+          Buy Again
+        </Button>
+      </div>
     </Card.Footer>
   </Card>
 );
@@ -146,8 +151,9 @@ function ViewOrderDetails() {
       if (user) {
         setUserId(user.uid);
       } else {
-        alert("Please log in to view your orders.");
-        navigate("/login"); // Redirect to login if not authenticated
+        // Only redirect if explicitly not logged in, otherwise let loading handle it.
+        // If the user logs in, the second useEffect will run.
+        setLoading(false); 
       }
     });
     return () => unsubscribe();
@@ -156,15 +162,17 @@ function ViewOrderDetails() {
   // 2. Fetch Orders from Firestore once userId is set
   useEffect(() => {
     if (!userId) {
-      // Wait for userId to be set by the first useEffect
+      if (!loading) { // If loading is already false (not logged in), don't proceed
+          return;
+      }
       return;
     }
 
     const fetchOrders = async () => {
       setLoading(true);
       try {
-        // Query the subcollection: /customers/{userId}/orders
-        const ordersRef = collection(db, "customers", userId, "orders");
+        // ✅ Query the subcollection: /users/{userId}/orders
+        const ordersRef = collection(db, "users", userId, "orders");
         // Order by the 'orderDate' field (or 'createdAt') descending
         const q = query(ordersRef, orderBy("orderDate", "desc")); 
 
@@ -199,11 +207,28 @@ function ViewOrderDetails() {
       </Container>
     );
   }
+  
+  // 🚫 Redirect unauthenticated user
+  if (!userId) {
+     return (
+        <Container className="py-5 text-center">
+            <Alert variant="danger">
+                You must be logged in to view your orders.
+                <div className="mt-2">
+                    <Button variant="primary" onClick={() => navigate("/login")}>
+                        Go to Login
+                    </Button>
+                </div>
+            </Alert>
+        </Container>
+      )
+  }
 
   // 🧾 Main Render
   return (
     <Container className="py-5">
       <Row className="justify-content-center">
+        {/* Col lg={9} ensures the content doesn't stretch too wide on huge screens */}
         <Col lg={9}>
           <h2 className="mb-4 fw-bold">
             Your Orders{" "}

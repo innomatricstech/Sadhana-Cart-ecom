@@ -148,10 +148,9 @@ export default function Header() {
     // ⭐ location state is read here
     const { location } = useSelector((state) => state.header);
     const cartItems = useSelector((state) => state.cart?.items || []);
-    const cartCount = cartItems.reduce(
-        (sum, item) => sum + (item.quantity || 1),
-        0
-    );
+    
+    // ✅ Use .length to count unique items instead of .reduce to sum quantities.
+    const cartCount = cartItems.length;
 
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [showLocationModal, setShowLocationModal] = useState(false);
@@ -243,6 +242,12 @@ export default function Header() {
 
     const goToCart = () => navigate("/cart");
 
+    // 🚀 NEW FUNCTION: Navigate to the orders page
+    const goToOrders = () => {
+        // You should define the route for your orders page here
+        navigate("/orders"); 
+    };
+
     // [ ... Search suggestion logic remains here ... ]
     useEffect(() => {
         const delayDebounceFn = setTimeout(async () => {
@@ -302,9 +307,9 @@ export default function Header() {
                 variant="light"
             >
                 <Container fluid className="px-3 d-flex flex-wrap">
-                    {/* 1. BRAND/LOGO (Always first on mobile by default, hidden on large screens for a cleaner look if not needed) */}
+                    {/* 1. BRAND/LOGO */}
                     <motion.div
-                        className="d-flex align-items-center brand-container me-auto" // Pushes the logo left, makes it take up space
+                        className="d-flex align-items-center brand-container me-auto"
                         initial={{ opacity: 0, x: -50 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.6 }}
@@ -318,9 +323,23 @@ export default function Header() {
                                 <span style={{ color: "orangered" }}>Cart</span></span>
                         </Navbar.Brand>
                     </motion.div>
-
-                    {/* 2. RIGHT SIDE ICONS (Visible on all screen sizes, moved right) */}
+                    
+                    {/* 2. RIGHT SIDE ICONS (Mobile) */}
                     <div className="d-flex d-lg-none align-items-center ms-auto">
+                        
+                        {/* Mobile: My Orders Icon (NEW ADDITION) */}
+                        <motion.div 
+                            whileTap={{ scale: 0.95 }} 
+                            className="me-2"
+                            onClick={goToOrders} 
+                            style={{ cursor: 'pointer' }}
+                        >
+                            <Button variant="outline-dark" className="account-button-mobile" title="My Orders">
+                                <i className="fas fa-box-open"></i>
+                            </Button>
+                        </motion.div>
+
+
                         {/* Mobile: Account/Sign In Icon */}
                         {currentUser ? (
                             <motion.div whileTap={{ scale: 0.95 }} className="me-2">
@@ -339,12 +358,13 @@ export default function Header() {
                         <motion.div whileTap={{ scale: 0.95 }}>
                             <Button variant="warning" className="cart-button-mobile" onClick={goToCart}>
                                 <i className="fas fa-shopping-cart"></i>
-                                <span className="cart-count-mobile">{cartCount}</span>
+                                {/* UPDATED: Mobile Cart Count */}
+                                <span className="cart-count-mobile">{cartCount}</span> 
                             </Button>
                         </motion.div>
                     </div>
 
-                    {/* 3. MOBILE SEARCH BAR (Visible ONLY on mobile, takes full width, and is placed below the brand/icons on the mobile container) */}
+                    {/* 3. MOBILE SEARCH BAR */}
                     <motion.div
                         ref={searchBarRef}
                         className="search-bar-container-mobile d-lg-none my-2 position-relative w-100"
@@ -401,6 +421,8 @@ export default function Header() {
                             </motion.div>
                         )}
                     </motion.div>
+                    
+                    {/* 4. DESKTOP NAVIGATION/ICONS */}
                     <Navbar.Collapse id="responsive-navbar-nav" className="d-none d-lg-flex flex-grow-1">
                         <Nav className="mx-auto align-items-center flex-grow-1">
                             <motion.div
@@ -411,28 +433,28 @@ export default function Header() {
                                 transition={{ duration: 0.4, delay: 0.2 }}
                                 style={{ transformOrigin: 'center' }}
                             >
-                              
+                                
                                     <Form
-  className="d-flex align-items-center justify-content-center gap-2"
-  onSubmit={(e) => {
-    e.preventDefault();
-    handleSearchSubmit();
-  }}
->
-  <Form.Control
-    type="search"
-    placeholder="What is on your mind today?"
-    className="form-control rounded-pill shadow-sm"
-    value={search}
-    onChange={(e) => setSearch(e.target.value)}
-    onFocus={() => {
-      if (suggestions.length > 0 && search.trim().length > 1)
-        setShowSuggestions(true);
-    }}
-    onKeyDown={handleKeyPress}
-  />
-  
-</Form>
+                                        className="d-flex align-items-center justify-content-center gap-2"
+                                        onSubmit={(e) => {
+                                            e.preventDefault();
+                                            handleSearchSubmit();
+                                        }}
+                                    >
+                                        <Form.Control
+                                            type="search"
+                                            placeholder="What is on your mind today?"
+                                            className="form-control rounded-pill shadow-sm"
+                                            value={search}
+                                            onChange={(e) => setSearch(e.target.value)}
+                                            onFocus={() => {
+                                                if (suggestions.length > 0 && search.trim().length > 1)
+                                                    setShowSuggestions(true);
+                                            }}
+                                            onKeyDown={handleKeyPress}
+                                        />
+                                        
+                                    </Form>
 
                                 {/* Search Suggestions Dropdown */}
                                 {showSuggestions && suggestions.length > 0 && (
@@ -462,19 +484,23 @@ export default function Header() {
 
                         {/* Right Side Icons/Links - Desktop */}
                         <Nav className="align-items-center ms-lg-3">
-                            {/* Location Display - Reads from Redux state */}
+                            
+                            
+                            {/* 🚀 My Orders Link - NOW IN DESKTOP AND COLLAPSED MENU */}
                             <motion.div
-                                className="location me-3 d-none d-lg-flex"
+                                className="orders-link me-3 d-flex flex-column align-items-center justify-content-center text-center"
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
-                                onClick={openLocationModal}
+                                onClick={goToOrders} 
+                                style={{ cursor: 'pointer' }}
                             >
-                                <i className="fas fa-map-marker-alt me-1"></i>
-                                <div>
-                                    Deliver to <br />
-                                    <span className="fw-bold text-dark">{location || "Set Location"}</span>
-                                </div>
+                                {/* Changed icon for 'My Orders' */}
+                                <i className="fas fa-box-open fa-lg mb-1"></i> 
+                                <span className="small fw-semibold" style={{ whiteSpace: 'nowrap' }}>
+                                    My Orders
+                                </span>
                             </motion.div>
+
 
                             {/* CONDITIONAL USER DISPLAY */}
                             {currentUser ? (
@@ -508,7 +534,8 @@ export default function Header() {
                                 <Button variant="warning" className="cart-button" onClick={goToCart}>
                                     <i className="fas fa-shopping-cart"></i>
                                     <span>Cart </span>
-                                    <span className="cart-count">{cartCount}</span>
+                                    {/* UPDATED: Desktop Cart Count */}
+                                    <span className="cart-count">{cartCount}</span> 
                                 </Button>
                             </motion.div>
                         </Nav>
