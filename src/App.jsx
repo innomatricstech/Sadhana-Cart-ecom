@@ -6,7 +6,7 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 
 // ✅ Common Components
 import Header from "./components/Navbar";
-import Footer from "./features/footer/Footer";
+import Footer from "../src/features/footer/Footer";
 
 // ✅ Pages
 import HomePage from "./pages/Home";
@@ -20,7 +20,6 @@ import CartPage from "./components/cartPage/CartPage";
 import CheckoutPage from "./components/cartPage/CheckoutPage";
 import CashOnDelivery from "./components/cartPage/CashOnDelivey";
 import OrderConformPage from "./components/cartPage/OrderConformPage";
-// 🎯 NEW IMPORT: ViewOrderDetails component (Order History)
 import ViewOrderDetails from "./components/cartPage/ViewOrderDetails"; 
 
 // ✅ Category Components
@@ -44,6 +43,9 @@ import ShippingPolicy from "./features/footer/ShippingPolicy";
 import TermsAndConditions from "./features/footer/TermsAndConditions";
 import AboutUs from "./features/footer/AboutUs";
 import Faqs from "./features/footer/Faqs";
+
+// ✅ New Contact Form Page
+import ContactForm from "../src/features/footer/ContactSupport";  // 👈 உங்கள் ContactForm.jsx இங்கே இருக்கும் பாதையில் import பண்ணவும்
 
 // ✅ Temporary Admin Pages
 const AdminLogin = () => <div className="text-center p-5">Admin Login Page</div>;
@@ -69,13 +71,8 @@ const AppContent = () => {
                     <Route path="/cart" element={<CartPage />} />
                     <Route path="/checkout" element={<CheckoutPage />} />
                     <Route path="/cod" element={<CashOnDelivery />} />
-                    
-                    {/* 🎯 Order Confirmation Page */}
                     <Route path="/order-confirm" element={<OrderConformPage />} /> 
-
-                    {/* 🚀 NEW ROUTE: View Order Details/History Page */}
                     <Route path="/orders" element={<ViewOrderDetails />} /> 
-
                     <Route path="/support" element={<CustomerSupportCenter />} />
 
                     {/* 🔹 Product & Category Routes */}
@@ -104,6 +101,9 @@ const AppContent = () => {
                     <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
                     <Route path="/about-us" element={<AboutUs />} />
                     <Route path="/faqs" element={<Faqs />} />
+
+                    {/* 🎯 New Contact Page Route */}
+                    <Route path="/contact" element={<ContactForm />} />   {/* 👈 இதுதான் முக்கியம் */}
 
                     {/* 🔹 404 Fallback */}
                     <Route

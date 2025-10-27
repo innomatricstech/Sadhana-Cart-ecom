@@ -61,20 +61,19 @@ function TermsAndConditions() {
     }
   ];
 
+  // WhatsApp link
+  const whatsappLink = `https://wa.me/9448810877?text=Hello%20SadhanaCart%20Support,%0AI%20need%20help%20regarding%20the%20Terms%20and%20Conditions.`;
+
   return (
     <div className="terms-container" id="top">
       {/* --- Orange Header Section --- */}
       <header className="terms-header-bg">
         <div className="terms-header-content">
-          {/* Clipboard icon (used as a placeholder for the original icon) */}
-          {/* The original screenshots didn't show the icon, but we'll use a placeholder for completeness */}
-          {/* If you want the icon hidden like the last screenshot, remove the line below or hide it with CSS */}
-          {/* <i className="terms-icon">📋</i> */}
           <h1>Our Terms & Conditions</h1>
         </div>
       </header>
 
-      {/* --- Main Content Area (Centered using Bootstrap's 'container' and custom CSS) --- */}
+      {/* --- Main Content Area --- */}
       <div className="container">
         <main className="terms-main-content">
           
@@ -82,7 +81,8 @@ function TermsAndConditions() {
           <div className="terms-intro">
             <h2>Terms & Conditions</h2>
             <p>
-              Please read these terms and conditions carefully before using our e-commerce multi-vendor application. By accessing or using the app, you agree to be bound by these terms.
+              Please read these terms and conditions carefully before using our e-commerce multi-vendor application. 
+              By accessing or using the app, you agree to be bound by these terms.
             </p>
           </div>
 
@@ -104,18 +104,33 @@ function TermsAndConditions() {
             <p>
               By using our app, you acknowledge that you have read, understood, and agree to be bound by these terms and conditions.
             </p>
-            {/* Using Bootstrap classes for button alignment */}
+
+            {/* Buttons */}
             <div className="d-flex justify-content-center gap-3 mt-3">
               <button className="btn btn-primary terms-btn-primary">I Understand</button>
-              <button className="btn btn-outline-secondary terms-btn-secondary">Contact Support</button>
+
+              {/* WhatsApp Contact Button */}
+              <a
+                href={whatsappLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-success terms-btn-secondary"
+                style={{
+                  backgroundColor: '#25D366',
+                  borderColor: '#25D366',
+                  color: 'white',
+                  fontWeight: '500'
+                }}
+              >
+                <i className="fab fa-whatsapp me-2"></i> Contact Support
+              </a>
             </div>
           </div>
           
-          {/* Animated Scroll to Top Button (Not visible in the ReturnPolicy component path unless scrolled) */}
-                <a href="#" className="scroll-to-top-btn animate__bounceInRight">
-                    <i className="fas fa-arrow-up"></i>
-                </a>
-
+          {/* Scroll to Top Button */}
+          <a href="#" className="scroll-to-top-btn animate__bounceInRight">
+            <i className="fas fa-arrow-up"></i>
+          </a>
         </main>
       </div>
     </div>

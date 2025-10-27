@@ -29,6 +29,7 @@
     "bootstrap": "^5.3.8",
     "bootstrap-icons": "^1.13.1",
     "classnames": "^2.5.1",
+    "emailjs-com": "^3.2.0",
     "firebase": "^12.4.0",
     "framer-motion": "^12.23.24",
     "lucide-react": "^0.545.0",

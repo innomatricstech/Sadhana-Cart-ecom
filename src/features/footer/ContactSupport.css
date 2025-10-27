@@ -1,0 +1,88 @@
+/* ContactForm.css */
+
+/* Overall container for centering the form */
+.contact-form-container {
+  min-height: 100vh; /* Full viewport height */
+  background-color: #f0f2f5; /* Light grey background, similar to Flipkart */
+  padding: 20px;
+}
+
+/* Card-like structure for the form, inspired by Flipkart's UI */
+.contact-card {
+  background-color: #ffffff; /* White background for the card */
+  border-radius: 8px; /* Slightly rounded corners */
+  width: 100%;
+  max-width: 550px; /* Max width to keep it centered and readable */
+  box-sizing: border-box; /* Include padding in width */
+  border: 1px solid #e0e0e0; /* Subtle border */
+}
+
+/* Title styling */
+.contact-title {
+  color: #212121; /* Dark grey for strong readability */
+  font-weight: 600; /* Semi-bold */
+  font-size: 1.8rem;
+}
+
+/* Form label styling */
+.form-label {
+  color: #555; /* Slightly lighter grey than title */
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+
+/* Input field styling (similar to Bootstrap defaults but with a Flipkart touch) */
+.form-control {
+  border-radius: 4px;
+  border: 1px solid #e0e0e0; /* Subtle border */
+  padding: 10px 12px;
+  font-size: 0.95rem;
+  /* Focus state similar to Flipkart's blue highlight */
+}
+
+.form-control:focus {
+  border-color: #2874f0; /* Flipkart blue */
+  box-shadow: 0 0 0 0.25rem rgba(40, 116, 240, 0.25); /* Lighter blue shadow */
+}
+
+/* Styling for invalid fields */
+.form-control.is-invalid {
+  border-color: #dc3545; /* Red for errors */
+}
+
+.invalid-feedback {
+  font-size: 0.875em; /* Smaller font for error messages */
+}
+
+/* Submit button styling */
+.contact-submit-btn {
+  background-color: #fb641b; /* Flipkart orange for primary actions */
+  border-color: #fb641b;
+  color: #fff;
+  font-weight: 500;
+  padding: 12px 15px;
+  font-size: 1rem;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
+.contact-submit-btn:hover {
+  background-color: #e05b16; /* Slightly darker orange on hover */
+  border-color: #e05b16;
+}
+
+/* Alert message for successful submission */
+.alert-success {
+  background-color: #d4edda;
+  color: #155724;
+  border-color: #c3e6cb;
+  border-radius: 4px;
+  padding: 10px 15px;
+  margin-bottom: 20px;
+}
+
+/* Text muted for descriptive paragraphs */
+.text-muted {
+  color: #757575 !important;
+  font-size: 0.95rem;
+}

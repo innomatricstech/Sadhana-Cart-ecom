@@ -1,17 +1,20 @@
-
-
-
 /* Footer.css */
 
 /* Define a keyframe animation for a subtle bounce/wiggle effect */
 @keyframes buttonWiggle {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(-5px) scale(1.05);
   }
+
   50% {
-    transform: translateY(-8px) scale(1.07); /* Deeper lift in the middle */
+    transform: translateY(-8px) scale(1.07);
+    /* Deeper lift in the middle */
   }
-  25%, 75% {
+
+  25%,
+  75% {
     transform: translateY(-5px) scale(1.03);
   }
 }
@@ -81,7 +84,8 @@
   color: #008080 !important;
   /* ANIMATION: Noticeable slide and subtle scale up */
   transform: translateX(8px) scale(1.02);
-  font-weight: 500; /* Makes the text look bolder/more important */
+  font-weight: 500;
+  /* Makes the text look bolder/more important */
 }
 
 /* Registered Office text color */
