@@ -30,7 +30,7 @@ const Footer = () => {
             </p>
             <p className="footer-copyright mb-0">
               Copyright © 2024-2025, All Right <br />
-              Reserved Sadhan Cart Team
+              Reserved Sadhan Cart Team.
 
               <p>Developed by Innomatrics Technologies</p>
             </p>
