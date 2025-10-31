@@ -18,16 +18,18 @@ function CashOnDelivery() {
   const cartItems = location.state?.cartItems || [];
   const productSkus = location.state?.productSkus || {};
   const totalPrice = location.state?.totalPrice || 0;
+  // ✅ NEW: Retrieve coordinates passed from the CheckoutPage
+  const coordinates = location.state?.coordinates || { lat: null, lng: null };
 
   // States for user management and saving status
   const [userId, setUserId] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
-  
+
   // 1. States for managing the informational modal/popup
-  const [showModal, setShowModal] = useState(false); 
+  const [showModal, setShowModal] = useState(false);
   const [modalTitle, setModalTitle] = useState("");
   const [modalMessage, setModalMessage] = useState("");
-  
+
   // 2. State for managing the confirmation modal
   const [showConfirmModal, setShowConfirmModal] = useState(false);
 
@@ -37,7 +39,7 @@ function CashOnDelivery() {
     setModalMessage(message);
     setShowModal(true);
   };
-  
+
   const handleCloseModal = () => setShowModal(false);
 
   // Fetch user ID on component mount
@@ -77,25 +79,22 @@ function CashOnDelivery() {
         phoneNumber: billingDetails.phone,
         createdAt: serverTimestamp(),
         orderDate: serverTimestamp(),
-        addressDetails: {
-          fullName: billingDetails.fullName,
-          addressLine1: billingDetails.address,
-          city: billingDetails.city,
-          postalCode: billingDetails.pincode,
-          state: "Karnataka",
-        },
+        address: `${billingDetails.address} ,${billingDetails.city} ,${billingDetails.pincode} ,${"Karnataka"}`,
+        latitude: coordinates.lat,
+        longitude: coordinates.lng,
+        name: billingDetails.fullName,
         products: cartItems.map((item) => {
           const hasVariantData = item.stock || item.weight || item.width || item.height;
 
           const sizevariants =
             hasVariantData || item.color || item.size
               ? {
-                  sku: item.sku !== "N/A" ? item.sku : null,
-                  stock: item.stock || null,
-                  weight: item.weight || null,
-                  width: item.width || null,
-                  height: item.height || null,
-                }
+                sku: item.sku !== "N/A" ? item.sku : null,
+                stock: item.stock || null,
+                weight: item.weight || null,
+                width: item.width || null,
+                height: item.height || null,
+              }
               : undefined;
 
           const finalSku = productSkus[item.id] || (item.sku !== "N/A" ? item.sku : item.id);
@@ -133,27 +132,27 @@ function CashOnDelivery() {
     if (isSaving) return;
 
     // Close the confirmation modal and start saving process
-    setShowConfirmModal(false); 
+    setShowConfirmModal(false);
     setIsSaving(true);
-    
+
     const orderPlaced = await saveOrderToFirestore("Cash on Delivery", "Pending");
 
     if (orderPlaced) {
-        dispatch(clearCart());
+      dispatch(clearCart());
 
-        navigate("/order-confirm", {
-            state: {
-                paymentMethod: "Cash on Delivery",
-                total: formatPrice(totalPrice),
-                itemsCount: cartItems.length,
-                billingDetails: billingDetails,
-            },
-        });
+      navigate("/order-confirm", {
+        state: {
+          paymentMethod: "Cash on Delivery",
+          total: formatPrice(totalPrice),
+          itemsCount: cartItems.length,
+          billingDetails: billingDetails,
+        },
+      });
     }
     // Note: If orderPlaced is false, the error is handled by showPopup inside saveOrderToFirestore
     setIsSaving(false);
   };
-  
+
   const handleConfirmOrder = () => {
     if (isSaving || !userId) return;
 
@@ -169,6 +168,7 @@ function CashOnDelivery() {
         billingDetails: billingDetails,
         productSkus: productSkus,
         totalPrice: totalPrice,
+        coordinates: coordinates, // Pass coordinates back just in case
       },
     });
   };
@@ -208,6 +208,12 @@ function CashOnDelivery() {
                 ? `${billingDetails.address}, ${billingDetails.city} - ${billingDetails.pincode}`
                 : "-"}
             </p>
+            {/* 📍 NEW: Display Coordinates if available for user verification */}
+            {coordinates.lat && coordinates.lng && (
+              <small className="d-block text-success fw-bold">
+                Location Verified: Lat: {coordinates.lat.toFixed(4)}, Lng: {coordinates.lng.toFixed(4)}
+              </small>
+            )}
           </Card>
 
           <Card className="mb-4 shadow-sm p-4">
@@ -269,7 +275,7 @@ function CashOnDelivery() {
       <Modal show={showModal} onHide={handleCloseModal}>
         <Modal.Header closeButton>
           <Modal.Title className={modalTitle.includes("Error") || modalTitle.includes("Required") ? "text-danger" : "text-warning"}>
-             {modalTitle}
+            {modalTitle}
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
@@ -295,9 +301,9 @@ function CashOnDelivery() {
           <Button variant="secondary" onClick={() => setShowConfirmModal(false)}>
             Cancel
           </Button>
-          <Button 
-            variant="warning" 
-            onClick={handleFinalOrderPlacement} 
+          <Button
+            variant="warning"
+            onClick={handleFinalOrderPlacement}
             disabled={isSaving}
           >
             Yes, Confirm Order

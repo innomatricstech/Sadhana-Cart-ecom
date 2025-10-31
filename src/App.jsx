@@ -45,7 +45,7 @@ import AboutUs from "./features/footer/AboutUs";
 import Faqs from "./features/footer/Faqs";
 
 // ✅ New Contact Form Page
-import ContactForm from "../src/features/footer/ContactSupport";  // 👈 உங்கள் ContactForm.jsx இங்கே இருக்கும் பாதையில் import பண்ணவும்
+import ContactForm from "../src/features/footer/ContactSupport";  
 
 // ✅ Temporary Admin Pages
 const AdminLogin = () => <div className="text-center p-5">Admin Login Page</div>;
