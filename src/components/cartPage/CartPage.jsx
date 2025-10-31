@@ -18,8 +18,8 @@ import {
 import { useNavigate, Link } from "react-router-dom";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
-import { db } from "../../firebase"; // ✅ FIXED: import Firestore instance
-import CartItem from "./CartItem";
+import { db } from "../../firebase";
+import CartItems from "./CartItems";
 
 const CartPage = () => {
   const dispatch = useDispatch();
@@ -32,14 +32,14 @@ const CartPage = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
-  const [stockData, setStockData] = useState({}); // 🧠 stores { productId: stock }
+  const [stockData, setStockData] = useState({});
 
-  // Scroll to top on component mount
+  // Scroll to top on mount
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
-  // Detect user login state
+  // Detect login state
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setIsLoggedIn(!!user);
@@ -47,16 +47,32 @@ const CartPage = () => {
     return () => unsubscribe();
   }, [auth]);
 
-  // 🧩 Fetch live stock for all cart items
+  // 🧠 Fetch stock for each product (take from first sizevariant)
   useEffect(() => {
     const fetchStocks = async () => {
       const newStockData = {};
+
       for (const item of cartItems) {
         try {
           const docRef = doc(db, "products", item.id);
           const docSnap = await getDoc(docRef);
+
           if (docSnap.exists()) {
-            newStockData[item.id] = docSnap.data().stock ?? 0;
+            const data = docSnap.data();
+
+            let stockValue = 0;
+
+            // ✅ Prefer first sizevariant stock if available
+            if (
+              Array.isArray(data.sizevariants) &&
+              data.sizevariants.length > 0
+            ) {
+              stockValue = data.sizevariants[0].stock ?? 0;
+            } else {
+              stockValue = data.stock ?? 0;
+            }
+
+            newStockData[item.id] = stockValue;
           } else {
             newStockData[item.id] = 0;
           }
@@ -65,19 +81,20 @@ const CartPage = () => {
           newStockData[item.id] = 0;
         }
       }
+
       setStockData(newStockData);
     };
 
     if (cartItems.length > 0) fetchStocks();
   }, [cartItems]);
 
-  // Toast for limit warnings
+  // Show toast when limit reached
   useEffect(() => {
     if (errorId) {
       const item = cartItems.find((i) => i.id === errorId);
       if (item) {
         setToastMessage(
-          `We're sorry! You've reached the maximum allowed stock for "${item.title}".`
+          `You've reached the maximum stock limit for "${item.title}".`
         );
         setShowToast(true);
         dispatch(clearCartError());
@@ -85,33 +102,37 @@ const CartPage = () => {
     }
   }, [errorId, cartItems, dispatch]);
 
-  // 🧩 Handle quantity increase with stock validation
-  const handleIncrease = async (item) => {
+  // ➕ Increase quantity with stock limit
+  const handleIncrease = (item) => {
     const stock = stockData[item.id] ?? 0;
-    if (stock === 0) {
-      setToastMessage(`"${item.title}" is currently out of stock.`);
-      setShowToast(true);
-      return;
-    }
+
     if (item.quantity >= stock) {
       setToastMessage(
-        `Only ${stock} unit${stock > 1 ? "s" : ""} available in stock for "${item.title}".`
+        `Only ${stock} unit${stock > 1 ? "s" : ""} available for "${item.title}".`
       );
       setShowToast(true);
       return;
     }
+
     dispatch(addToCart({ ...item, quantity: 1 }));
   };
 
+  // ➖ Decrease quantity
   const handleDecrease = (item) => {
     if (item.quantity > 1) {
-      dispatch(removeFromCart({ id: item.id, quantity: 1 }));
+      dispatch(removeFromCart({ id: item.id, size: item.size, quantity: 1 }));
     }
   };
 
-  const handleRemove = (item) => dispatch(removeFromCart({ id: item.id }));
+  // 🗑 Remove item
+  const handleRemove = (item) => {
+    dispatch(removeFromCart({ id: item.id, size: item.size }));
+  };
+
+  // 🧹 Clear cart
   const handleClear = () => dispatch(clearCart());
 
+  // 💰 Total price
   const totalPrice = cartItems.reduce(
     (total, item) => total + item.price * item.quantity,
     0
@@ -124,16 +145,18 @@ const CartPage = () => {
       maximumFractionDigits: 0,
     }).format(value);
 
+  // 🛒 Checkout
   const handleCheckout = () => {
     if (isLoggedIn) navigate("/checkout");
     else navigate("/login", { state: { from: "/checkout" } });
   };
 
+  // 🕳 Empty Cart View
   if (cartItems.length === 0)
     return (
       <Container className="text-center py-5">
         <h2 className="text-muted mb-4">Your Cart is Empty 🛒</h2>
-        <p>Looks like you haven't added anything to your cart yet.</p>
+        <p>Looks like you haven't added anything yet.</p>
         <Link to="/" className="btn btn-primary mt-3">
           Start Shopping
         </Link>
@@ -146,19 +169,22 @@ const CartPage = () => {
         🛍️ Your Shopping Cart
       </h2>
 
+      {/* 🧩 Cart Items */}
       <Row className="g-4">
-        {cartItems.map((item) => (
-          <Col xs={12} key={item.id}>
-            <CartItem
-              item={{ ...item, stock: stockData[item.id] }}
-              onIncrease={handleIncrease}
-              onDecrease={handleDecrease}
-              onRemove={handleRemove}
-            />
-          </Col>
-        ))}
+        <Col xs={12}>
+          <CartItems
+            items={cartItems.map((i) => ({
+              ...i,
+              stock: stockData[i.id] ?? 0,
+            }))}
+            onIncrease={handleIncrease}
+            onDecrease={handleDecrease}
+            onRemove={handleRemove}
+          />
+        </Col>
       </Row>
 
+      {/* 🧾 Summary Section */}
       <Row className="justify-content-center mt-5">
         <Col xs={12} md={8} lg={6}>
           <Card className="cart-summary-card shadow-lg border-0">
@@ -188,6 +214,7 @@ const CartPage = () => {
         </Col>
       </Row>
 
+      {/* 🔔 Toast for stock limit */}
       <ToastContainer position="bottom-center" className="p-3">
         <Toast
           onClose={() => setShowToast(false)}

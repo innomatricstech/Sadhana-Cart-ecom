@@ -109,7 +109,9 @@ const CheckoutPage = () => {
   // State for coordinates
   const [coordinates, setCoordinates] = useState({ lat: null, lng: null });
   const [geocodingError, setGeocodingError] = useState(null);
-  // ✨ NEW: State for current location fetching
+  // ✨ NEW: State for location status messages (Success/Warning)
+  const [locationStatusMessage, setLocationStatusMessage] = useState(null); 
+  // State for current location fetching
   const [isLocating, setIsLocating] = useState(false);
 
   const fetchProductMainSku = async (productId) => {
@@ -206,10 +208,12 @@ const CheckoutPage = () => {
     if (fullAddress.trim().length < 10) {
       setGeocodingError("Address is incomplete.");
       setCoordinates({ lat: null, lng: null });
+      setLocationStatusMessage(null); // Clear success message
       return;
     }
 
     setGeocodingError("Locating address...");
+    setLocationStatusMessage(null); // Clear success message
 
     try {
       // Nominatim API call (Public endpoint)
@@ -225,18 +229,21 @@ const CheckoutPage = () => {
         const { lat, lon } = data[0];
         setCoordinates({ lat: parseFloat(lat), lng: parseFloat(lon) });
         setGeocodingError(null);
+        setLocationStatusMessage(null); // Clear old status if successful
         console.log("Nominatim successful:", { lat, lng: lon });
       } else {
         setCoordinates({ lat: null, lng: null });
         setGeocodingError(
           `Address could not be accurately located. Please check the spelling.`
         );
+        setLocationStatusMessage(null);
         console.error("Geocoding failed: No results found.");
       }
     } catch (error) {
       console.error("Error during Nominatim API call:", error);
       setCoordinates({ lat: null, lng: null });
       setGeocodingError("Failed to connect to geocoding service (Network Error).");
+      setLocationStatusMessage(null);
     }
   }, []); // useCallback dependency array is empty
 
@@ -249,13 +256,14 @@ const CheckoutPage = () => {
   );
 
   /**
-   * ✨ FIX: Reverse geocodes coordinates to fill in address fields, ensuring street number, street, and area.
+   * FIX: Reverse geocodes coordinates to fill in address fields, ensuring street number, street, and area.
    * @param {number} lat - Latitude
    * @param {number} lng - Longitude
    */
   const reverseGeocodeCoordinates = async (lat, lng) => {
     setIsLocating(true);
     setGeocodingError("Reverse geocoding address...");
+    setLocationStatusMessage(null); // Clear previous status/success message
 
     try {
       // Nominatim API call for reverse geocoding
@@ -288,9 +296,8 @@ const CheckoutPage = () => {
         
         let cleanedAddress = addressComponents.join(", ");
         
-        // ✨ FINAL ROBUST FALLBACK: If the manually built address is too short OR 
+        // FINAL ROBUST FALLBACK: If the manually built address is too short OR 
         // if we are missing the street number, use a large slice of the full display name. 
-        // This display name is the most likely place to contain a written-out street number/name combination.
         if (cleanedAddress.length < 10 || (doorNumber === "" && streetName === "")) {
             // Take the first 5 components of the full display_name string for maximum detail
             const fullDisplayNameParts = data.display_name.split(",").map(p => p.trim()).filter(p => p !== '');
@@ -326,14 +333,17 @@ const CheckoutPage = () => {
         // Update coordinates state (Nominatim result coordinates might be slightly different than input)
         setCoordinates({ lat: parseFloat(data.lat), lng: parseFloat(data.lon) });
         setGeocodingError(null);
-        alert("Address pre-filled from current location! Please check and edit the House/Door Number if necessary.");
+        // ✨ NEW: Use state instead of alert
+        setLocationStatusMessage("Address pre-filled from current location! Please check and edit the House/Door Number if necessary.");
       } else {
         setCoordinates({ lat: null, lng: null });
         setGeocodingError("Reverse geocoding failed: Address not found for coordinates.");
+        setLocationStatusMessage(null);
       }
     } catch (error) {
       console.error("Error during reverse geocoding:", error);
       setGeocodingError("Failed to connect to reverse geocoding service.");
+      setLocationStatusMessage(null);
     } finally {
       setIsLocating(false);
     }
@@ -345,11 +355,13 @@ const CheckoutPage = () => {
   const fetchCurrentLocation = () => {
     if (!("geolocation" in navigator)) {
       setGeocodingError("Geolocation is not supported by your browser.");
+      setLocationStatusMessage(null);
       return;
     }
 
     setIsLocating(true);
     setGeocodingError("Fetching current GPS coordinates...");
+    setLocationStatusMessage(null); // Clear success message at start
     setCoordinates({ lat: null, lng: null });
 
     navigator.geolocation.getCurrentPosition(
@@ -369,6 +381,7 @@ const CheckoutPage = () => {
           errorMessage = "Timed out while trying to get location.";
         }
         setGeocodingError(errorMessage);
+        setLocationStatusMessage(null); // Clear success message on error
         console.error("Geolocation error:", error);
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
@@ -497,6 +510,7 @@ const CheckoutPage = () => {
         // Clear coordinates and error if address is incomplete
         setCoordinates({ lat: null, lng: null });
         setGeocodingError(null);
+        setLocationStatusMessage(null);
       }
     }
   };
@@ -660,7 +674,7 @@ const CheckoutPage = () => {
                 />
               </Form.Group>
 
-              {/* ✨ Use Current Location Button */}
+              {/* Use Current Location Button */}
               <div className="mb-3 d-flex justify-content-end">
                 <Button
                   variant="outline-secondary"
@@ -685,7 +699,6 @@ const CheckoutPage = () => {
                   )}
                 </Button>
               </div>
-              {/* END NEW */}
 
               <Form.Group className="mb-3" controlId="address">
                 <Form.Label>Address *</Form.Label>
@@ -725,15 +738,25 @@ const CheckoutPage = () => {
                 </Col>
               </Row>
               
-              {/* Geocoding Status/Error */}
-              {/* {geocodingError && (
-                  <Alert variant={geocodingError.includes("failed") || geocodingError.includes("denied") ? "danger" : "info"} className="mt-2">
-                      {geocodingError}
-                      {geocodingError.includes("Accurately located") && coordinates.lat && coordinates.lng && (
-                          <span className="text-success fw-bold ms-2"> (Location Confirmed)</span>
-                      )}
+              {/* Geocoding Status/Messages (Replaced pop-up alert) */}
+              {/* {locationStatusMessage ? (
+                  // Success/Informational message after successful reverse geocoding
+                  <Alert variant="success" className="mt-2">
+                      {locationStatusMessage}
                   </Alert>
-              )} */}
+              ) : geocodingError ? (
+                  // Error or locating message
+                  <Alert 
+                      variant={
+                          geocodingError.includes("failed") || geocodingError.includes("denied") || geocodingError.includes("Could not get location")
+                              ? "danger" // Fatal errors
+                              : "info" // Locating status
+                      } 
+                      className="mt-2"
+                  >
+                      {geocodingError}
+                  </Alert>
+              ) : null} */}
 
               <Form.Group className="mb-3">
                 <Form.Label>Payment Method *</Form.Label>
