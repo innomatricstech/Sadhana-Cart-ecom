@@ -1,17 +1,24 @@
 import React, { useState, useEffect } from "react";
-import { Container, Row, Col, Card, Alert, Button, Spinner } from "react-bootstrap";
+import {
+  Container,
+  Row,
+  Col,
+  Card,
+  Button,
+  Spinner,
+  Alert,
+} from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { db } from "../../firebase";
 import { collection, query, orderBy, getDocs } from "firebase/firestore";
 
-// 🔹 Map Firestore Order Data
+// 🔹 Convert Firestore Order to Local Object
 const mapFirestoreOrderToLocal = (docData, docId) => {
   const status = docData.orderStatus || "Processing";
   let orderDate = "N/A";
 
-  // Format Firestore Timestamp
-  if (docData.orderDate && docData.orderDate.toDate) {
+  if (docData.orderDate?.toDate) {
     orderDate = docData.orderDate.toDate().toLocaleDateString("en-IN", {
       year: "numeric",
       month: "short",
@@ -59,14 +66,18 @@ const OrderCard = ({ order, navigate }) => (
     <Card.Body>
       <Row>
         <Col md={6}>
-          <p className="mb-1"><strong>Order Date:</strong> {order.date}</p>
           <p className="mb-1">
-            <strong>Total Amount:</strong>{" "}
+            <strong>Order Date:</strong> {order.date}
+          </p>
+          <p className="mb-1">
+            <strong>Total:</strong>{" "}
             <span className="text-danger fw-bold">
               ₹{order.total?.toLocaleString("en-IN")}
             </span>
           </p>
-          <p className="mb-0"><strong>Payment:</strong> {order.paymentMethod}</p>
+          <p className="mb-0">
+            <strong>Payment:</strong> {order.paymentMethod}
+          </p>
         </Col>
 
         <Col md={6} className="mt-3 mt-md-0">
@@ -79,13 +90,20 @@ const OrderCard = ({ order, navigate }) => (
         </Col>
       </Row>
 
-      {order.items && order.items.length > 0 && (
+      {order.items?.length > 0 && (
         <div className="mt-3 border-top pt-3">
           <h6 className="fw-bold mb-2">Items:</h6>
           {order.items.map((item, idx) => (
-            <div key={idx} className="d-flex justify-content-between small mb-1">
-              <span>{item.name} × {item.quantity}</span>
-              <span>₹{(item.price * item.quantity).toLocaleString("en-IN")}</span>
+            <div
+              key={idx}
+              className="d-flex justify-content-between small mb-1"
+            >
+              <span>
+                {item.name} × {item.quantity}
+              </span>
+              <span>
+                ₹{(item.price * item.quantity).toLocaleString("en-IN")}
+              </span>
             </div>
           ))}
         </div>
@@ -120,33 +138,35 @@ function ViewOrderDetails() {
   const [userId, setUserId] = useState(null);
   const navigate = useNavigate();
 
-  // Hardcoded test user (optional)
-  const FIXED_USER_ID = "Enr6Vm4xptfgs4iclINWHtTkOvf2";
-
-  // Auth check
+  // 🧠 Check Auth
   useEffect(() => {
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) setUserId(user.uid);
-      else setLoading(false);
+      if (user) {
+        setUserId(user.uid);
+      } else {
+        navigate("/login"); // 🔁 Redirect if not logged in
+      }
+      setLoading(false);
     });
     return () => unsubscribe();
-  }, []);
+  }, [navigate]);
 
-  // Fetch Orders
+  // 🧩 Fetch Orders only if user is logged in
   useEffect(() => {
     const fetchOrders = async () => {
+      if (!userId) return;
       setLoading(true);
-      try {
-        const uid = userId || FIXED_USER_ID;
-        const ordersRef = collection(db, "users", uid, "orders");
-        const q = query(ordersRef, orderBy("orderDate", "desc"));
-        const querySnapshot = await getDocs(q);
 
-        const fetchedOrders = querySnapshot.docs.map((doc) =>
+      try {
+        const ordersRef = collection(db, "users", userId, "orders");
+        const q = query(ordersRef, orderBy("orderDate", "desc"));
+        const snapshot = await getDocs(q);
+
+        const fetched = snapshot.docs.map((doc) =>
           mapFirestoreOrderToLocal(doc.data(), doc.id)
         );
-        setOrders(fetchedOrders);
+        setOrders(fetched);
       } catch (error) {
         console.error("❌ Error fetching orders:", error);
         setOrders([]);
@@ -158,7 +178,7 @@ function ViewOrderDetails() {
     fetchOrders();
   }, [userId]);
 
-  // Loading State
+  // 🌀 Show Loading Spinner
   if (loading) {
     return (
       <Container className="py-5 text-center">
@@ -168,23 +188,7 @@ function ViewOrderDetails() {
     );
   }
 
-  // No orders or not logged in
-  if (!userId && !FIXED_USER_ID) {
-    return (
-      <Container className="py-5 text-center">
-        <Alert variant="danger">
-          You must be logged in to view your orders.
-          <div className="mt-2">
-            <Button variant="primary" onClick={() => navigate("/login")}>
-              Go to Login
-            </Button>
-          </div>
-        </Alert>
-      </Container>
-    );
-  }
-
-  // Render Orders
+  // 🧾 Show Orders
   return (
     <Container className="py-5">
       <Row className="justify-content-center">
